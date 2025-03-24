@@ -127,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
 <body>
     <div class="container">
         <h1>Issues List</h1>
+        <button type="button" class="btn" onclick="window.location.href='persons_list.php'">Go to Persons List</button>
         <button type="button" class="btn" onclick="openModal('addModal')">+</button>
         <table>
             <thead>
@@ -200,32 +201,62 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
     </div>
 
 
-    <!-- Modal for updating an issue -->
     <?php foreach ($issues as $issue): ?>
-        <div id="updateModal-<?= $issue['id'] ?>" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('updateModal-<?= $issue['id'] ?>')">&times;</span>
-                <h2>Update Issue</h2>
-                <form action="issues_list.php" method="POST">
-                    <input type="hidden" name="issue_id" value="<?= $issue['id'] ?>">
-                    <input type="text" name="short_description" value="<?= htmlspecialchars($issue['short_description']) ?>" required>
-                    <textarea name="long_description"><?= htmlspecialchars($issue['long_description']) ?></textarea>
-                    <input type="date" name="open_date" value="<?= $issue['open_date'] ?>" required>
-                    <input type="date" name="close_date" value="<?= $issue['close_date'] ?>">
-                    <input type="text" name="priority" value="<?= htmlspecialchars($issue['priority']) ?>" required>
-                    <input type="text" name="org" value="<?= htmlspecialchars($issue['org']) ?>" required>
-                    <input type="text" name="project" value="<?= htmlspecialchars($issue['project']) ?>" required>
-                    <select name="per_id" required>
-                        <?php foreach ($persons as $person): ?>
-                            <option value="<?= htmlspecialchars($person['id']) ?>" <?= $person['id'] == $issue['per_id'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($person['fname'] . ' ' . $person['lname']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <button type="submit" name="update_issue">Update Issue</button>
-                </form>
+    <div id="updateModal-<?= $issue['id'] ?>" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('updateModal-<?= $issue['id'] ?>')">&times;</span>
+            <h2>Update Issue</h2>
+            
+            <!-- Display the issue details that are going to be updated -->
+            <div class="update-description">
+                <h3>Current Details</h3>
+                <p><strong>Short Description:</strong> <?= htmlspecialchars($issue['short_description']) ?></p>
+                <p><strong>Long Description:</strong> <?= htmlspecialchars($issue['long_description']) ?></p>
+                <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
+                <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
+                <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
+                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
+                <p><strong>Open Date:</strong> <?= $issue['open_date'] ?></p>
+                <p><strong>Close Date:</strong> <?= $issue['close_date'] ?></p>
             </div>
+            
+            <form action="issues_list.php" method="POST">
+                <input type="hidden" name="issue_id" value="<?= $issue['id'] ?>">
+                <label for="short_description">Short Description:</label>
+                <input type="text" name="short_description" value="<?= htmlspecialchars($issue['short_description']) ?>" required>
+                
+                <label for="long_description">Long Description:</label>
+                <textarea name="long_description"><?= htmlspecialchars($issue['long_description']) ?></textarea>
+                
+                <label for="open_date">Open Date:</label>
+                <input type="date" name="open_date" value="<?= $issue['open_date'] ?>" required>
+                
+                <label for="close_date">Close Date:</label>
+                <input type="date" name="close_date" value="<?= $issue['close_date'] ?>">
+                
+                <label for="priority">Priority:</label>
+                <input type="text" name="priority" value="<?= htmlspecialchars($issue['priority']) ?>" required>
+                
+                <label for="org">Organization:</label>
+                <input type="text" name="org" value="<?= htmlspecialchars($issue['org']) ?>" required>
+                
+                <label for="project">Project:</label>
+                <input type="text" name="project" value="<?= htmlspecialchars($issue['project']) ?>" required>
+                
+                <label for="per_id">Assigned Person:</label>
+                <select name="per_id" required>
+                    <?php foreach ($persons as $person): ?>
+                        <option value="<?= htmlspecialchars($person['id']) ?>" <?= $person['id'] == $issue['per_id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($person['fname'] . ' ' . $person['lname']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                
+                <button type="submit" name="update_issue">Update Issue</button>
+            </form>
         </div>
+    </div>
+
 
         <!-- Modal for deleting an issue -->
         <div id="deleteModal-<?= $issue['id'] ?>" class="modal">
@@ -233,6 +264,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <span class="close" onclick="closeModal('deleteModal-<?= $issue['id'] ?>')">&times;</span>
                 <h2>Delete Issue</h2>
                 <p>Are you sure you want to delete this issue?</p>
+                <span class="close" onclick="closeModal('readModal-<?= $issue['id'] ?>')">&times;</span>
+                <h2>Issue Details</h2>
+                <p><strong>ID:</strong> <?= htmlspecialchars($issue['id']) ?></p>
+                <p><strong>Short Description:</strong> <?= htmlspecialchars($issue['short_description']) ?></p>
+                <p><strong>Long Description:</strong> <?= htmlspecialchars($issue['long_description']) ?></p>
+                <p><strong>Open Date:</strong> <?= htmlspecialchars($issue['open_date']) ?></p>
+                <p><strong>Close Date:</strong> <?= htmlspecialchars($issue['close_date']) ?></p>
+                <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
+                <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
+                <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
+                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($issue['fname']) ?> <?= htmlspecialchars($issue['lname']) ?></p>
                 <form action="issues_list.php" method="POST">
                     <input type="hidden" name="issue_id" value="<?= $issue['id'] ?>">
                     <button type="submit" name="delete_issue">Delete</button>
