@@ -1,32 +1,32 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #dfe6e9; /* Soft blue-gray */
+    background-color: #dfe6e9;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     height: 100vh;
     margin: 0;
-    padding-top: 50px; /* Adjusted for the issues page */
+    padding-top: 50px;
 }
 
 .container {
-    background: #ffffff; /* White background for contrast */
+    background: #ffffff;
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 90%; /* Set width to 90% of the screen width */
-    max-width: 1200px; /* Maximum width of the container */
+    width: 90%;
+    max-width: 1200px;
     text-align: center;
 }
 
 h1 {
     margin-bottom: 20px;
-    color: #2d3436; /* Dark gray text */
+    color: #2d3436;
 }
 
 /* Table styling */
 table {
-    width: 100%; /* Table takes up 100% of the container width */
+    width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
@@ -41,16 +41,16 @@ th, td {
 }
 
 th {
-    background-color: #0984e3; /* Bright blue */
+    background-color: #0984e3;
     color: white;
 }
 
 td {
-    background-color: #f5f6fa; /* Light gray background for table rows */
+    background-color: #f5f6fa;
 }
 
 tr:nth-child(even) td {
-    background-color: #eaecef; /* Alternating row colors */
+    background-color: #eaecef;
 }
 
 /* Button Styling */
@@ -72,22 +72,23 @@ tr:nth-child(even) td {
 
 /* Modal Styling */
 .modal {
-    display: none; /* Hidden by default */
+    display: none;
     position: fixed;
-    z-index: 1; /* Sit on top */
+    z-index: 1;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5); /* Grey out background */
-    padding-top: 50px;
+    background-color: rgba(0,0,0,0.5);
 }
 
-/* Modal content */
+.modal.active {
+    display: block;
+}
+
+
 .modal-content {
     background-color: #ffffff;
-    margin: 5% auto;
     padding: 20px;
     border-radius: 10px;
     width: 80%;
