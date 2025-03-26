@@ -11,6 +11,84 @@ require '../database/db_connection.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Handle Add Person
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_person'])) {
+    // Sanitize input data
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $mobile = $_POST['mobile'];
+    $email = $_POST['email'];
+    $pwd_hash = $_POST['pwd_hash'];  // Assuming you're hashing passwords before storing
+    $admin = $_POST['admin'];
+
+    // Hash the password before storing
+    $pwd_salt = bin2hex(random_bytes(32)); // Generating a salt
+    $pwd_hash = hash('sha256', $pwd_salt . $pwd_hash); // Using a hash and salt for secure storage
+
+    $sql = "INSERT INTO iss_persons (fname, lname, mobile, email, pwd_hash, pwd_salt, admin)
+            VALUES (:fname, :lname, :mobile, :email, :pwd_hash, :pwd_salt, :admin)";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([
+        ':fname' => $fname,
+        ':lname' => $lname,
+        ':mobile' => $mobile,
+        ':email' => $email,
+        ':pwd_hash' => $pwd_hash,
+        ':pwd_salt' => $pwd_salt,
+        ':admin' => $admin
+    ]);
+
+    // Redirect to refresh the list
+    header("Location: persons_list.php");
+    exit();
+}
+
+// Handle Update Person
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_person'])) {
+    // Sanitize input data
+    $person_id = $_POST['person_id'];
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $mobile = $_POST['mobile'];
+    $email = $_POST['email'];
+    $admin = $_POST['admin'];
+
+    // Prepare SQL to update the person details
+    $sql = "UPDATE iss_persons
+            SET fname = :fname, lname = :lname, mobile = :mobile, email = :email, admin = :admin
+            WHERE id = :id";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([
+        ':id' => $person_id,
+        ':fname' => $fname,
+        ':lname' => $lname,
+        ':mobile' => $mobile,
+        ':email' => $email,
+        ':admin' => $admin
+    ]);
+
+    // Redirect to refresh the list
+    header("Location: persons_list.php");
+    exit();
+}
+
+// Handle Delete Person
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_person'])) {
+    // Get person ID from the form
+    $person_id = $_POST['person_id'];
+
+    // Prepare and execute the deletion SQL
+    $sql = "DELETE FROM iss_persons WHERE id = :id";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([':id' => $person_id]);
+
+    // Redirect to refresh the list
+    header("Location: persons_list.php");
+    exit();
+}
+
 // Retrieve all persons from the database
 $sql = "SELECT * FROM iss_persons";
 $stmt = $conn->prepare($sql);
@@ -101,7 +179,6 @@ if (!isset($_SESSION['user_id'])) {
             </div>
         </div>
     <?php endforeach; ?>
-
 
     <!-- Modal for updating a person -->
     <?php foreach ($persons as $person): ?>

@@ -154,6 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                             <button type="button" onclick="openModal('readModal-<?= $issue['id'] ?>')">Read</button>
                             <button type="button" onclick="openModal('updateModal-<?= $issue['id'] ?>')">Update</button>
                             <button type="button" onclick="openModal('deleteModal-<?= $issue['id'] ?>')">Delete</button>
+                            <button type="button" onclick="window.location.href='comments_list.php?issue_id=<?= $issue['id'] ?>'">Comments</button>
                         </td>
                     </tr>
                 <?php endforeach; ?>
