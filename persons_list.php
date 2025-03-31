@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_person'])) {
 
     // Hash the password before storing
     $pwd_salt = bin2hex(random_bytes(32)); // Generating a salt
-    $pwd_hash = hash('sha256', $pwd_salt . $pwd_hash); // Using a hash and salt for secure storage
+    $pwd_hash = md5($pwd_salt . $pwd_hash); // Using a hash and salt for secure storage
 
     $sql = "INSERT INTO iss_persons (fname, lname, mobile, email, pwd_hash, pwd_salt, admin)
             VALUES (:fname, :lname, :mobile, :email, :pwd_hash, :pwd_salt, :admin)";

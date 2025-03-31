@@ -29,6 +29,44 @@ if (!isset($_SESSION['user_id'])) {
 
 // Add new issue
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
+    //echo "this a test of file uploads"; print_r($_FILES); exit(); //checkpoint
+    
+    if(isset($_FILES['pdf_attachment'])){
+        $fileTmpPath = $_FILES['pdf_attachment']['tmp_name'];
+        $fileName = $_FILES['pdf_attachment']['name'];
+        $fileSize = $_FILES['pdf_attachment']['size'];
+        $fileType = $_FILES['pdf_attachment']['type'];
+        $fileNameCmps = explode(".", $fileName);
+        $fileExtension = strtolower(end($fileNameCmps));
+
+        if($fileExtension !== 'pdf') {
+            die("Only PDF files are allowed!"); //die kills whole program
+        }
+        if($fileSize > 2 * 1024 * 1024) {
+            die("File size exceeds 2MB limit.");
+        }
+
+        $newFileName = md5(time() . $fileName) . ',' . $fileExtension;
+        $uploadFileDir = './uploads/'; //creates an upload file folder where the program is
+        $dest_path = $uploadFileDir . $newFileName;
+
+        // if uploads directory does not exist, create it
+        if(!is_dir($uploadFileDir)) {
+            mkdir($uploadFileDir, 0755, true);
+        }
+
+        if(move_uploaded_file($fileTmpPath, $dest_path)) {
+            $attachmentPath = $dest_path;
+        } else{
+            die("Error moving the uploaded file.");
+        }
+    } //end pdf attachment
+    
+    else { 
+        $attachmentPath = null;
+    }
+
+
     $short_description = $_POST['short_description'];
     $long_description = $_POST['long_description'];
     $open_date = $_POST['open_date'];
@@ -37,9 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
     $project = $_POST['project'];
     $per_id = $_POST['per_id'];
     $close_date = '0000-00-00'; // Default until updated
+    // $newFileName is PDF attachment
+    // $attachmentPath is the entire path
 
-    $sql = "INSERT INTO iss_issues (short_description, long_description, open_date, close_date, priority, org, project, per_id) 
-            VALUES (:short_description, :long_description, :open_date, :close_date, :priority, :org, :project, :per_id)";
+    $sql = "INSERT INTO iss_issues (short_description, long_description, open_date, close_date, priority, org, project, per_id, pdf_attachment) 
+        VALUES (:short_description, :long_description, :open_date, :close_date, :priority, :org, :project, :per_id, :pdf_attachment)";
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ':short_description' => $short_description,
@@ -49,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
         ':priority' => $priority,
         ':org' => $org,
         ':project' => $project,
-        ':per_id' => $per_id
+        ':per_id' => $per_id,
+        ':pdf_attachment' => $newFileName
     ]);
 
     // Refresh the issues list after inserting new issue
@@ -167,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
         <div class="modal-content">
             <span class="close" onclick="closeModal('addModal')">&times;</span>
             <h2>Add Issue</h2>
-            <form action="issues_list.php" method="POST">
+            <form action="issues_list.php" method="POST" enctype="multipart/form-data">
                 <input type="text" name="short_description" placeholder="Short Description" required>
                 <textarea name="long_description" placeholder="Long Description"></textarea>
                 <input type="date" name="open_date" required>
@@ -179,6 +221,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                         <option value="<?= htmlspecialchars($person['id']) ?>"><?= htmlspecialchars($person['fname'] . ' ' . $person['lname']) ?></option>
                     <?php endforeach; ?>
                 </select>
+                
+                <label for="pdf_attachment">PDF<label>
+                <input type="file" name="pdf_attachment" accept="application/pdf">
+                
                 <button type="submit" name="add_issue">Add Issue</button>
             </form>
         </div>
@@ -221,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <p><strong>Close Date:</strong> <?= $issue['close_date'] ?></p>
             </div>
             
-            <form action="issues_list.php" method="POST">
+            <form action="issues_list.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="issue_id" value="<?= $issue['id'] ?>">
                 <label for="short_description">Short Description:</label>
                 <input type="text" name="short_description" value="<?= htmlspecialchars($issue['short_description']) ?>" required>
@@ -252,6 +298,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                         </option>
                     <?php endforeach; ?>
                 </select>
+
+                <label for="pdf_attachment">PDF<label>
+                <input type="file" name="pdf_attachment" accept="application/pdf">
                 
                 <button type="submit" name="update_issue">Update Issue</button>
             </form>
