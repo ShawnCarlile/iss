@@ -31,7 +31,8 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
     //echo "this a test of file uploads"; print_r($_FILES); exit(); //checkpoint
     
-    if(isset($_FILES['pdf_attachment'])){
+    if(isset($_FILES['pdf_attachment']) && $_FILES['pdf_attachment']['error'] === UPLOAD_ERR_OK){
+        echo "True";
         $fileTmpPath = $_FILES['pdf_attachment']['tmp_name'];
         $fileName = $_FILES['pdf_attachment']['name'];
         $fileSize = $_FILES['pdf_attachment']['size'];
@@ -231,6 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
     </div>
 
     <!-- Read Modal for each issue -->
+     <?php foreach ($issues as $issue): ?>
     <div class="modal" id="readModal-<?= $issue['id'] ?>">
         <div class="modal-content">
             <span class="close" onclick="closeModal('readModal-<?= $issue['id'] ?>')">&times;</span>
@@ -243,12 +245,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
             <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
             <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
             <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
-            <p><strong>Assigned Person:</strong> <?= htmlspecialchars($issue['fname']) ?> <?= htmlspecialchars($issue['lname']) ?></p>
+            <p><strong>Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
+
         </div>
     </div>
 
-
-    <?php foreach ($issues as $issue): ?>
     <div id="updateModal-<?= $issue['id'] ?>" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('updateModal-<?= $issue['id'] ?>')">&times;</span>
@@ -324,7 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
                 <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
                 <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
-                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($issue['fname']) ?> <?= htmlspecialchars($issue['lname']) ?></p>
+                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
                 <form action="issues_list.php" method="POST">
                     <input type="hidden" name="issue_id" value="<?= $issue['id'] ?>">
                     <button type="submit" name="delete_issue">Delete</button>

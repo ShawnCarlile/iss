@@ -18,6 +18,11 @@ if (isset($_GET['issue_id'])) {
     echo "Issue ID is missing!";
     exit();
 }
+// Fetch person details to display first and last name
+$sql = "SELECT * FROM iss_persons";
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$persons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch the issue details based on issue_id
 $sql = "SELECT * FROM iss_issues WHERE id = :issue_id";
@@ -87,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_comment'])) {
         <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
         <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
         <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
-        <p><strong>Assigned Person:</strong> <?= htmlspecialchars($issue['fname']) ?> <?= htmlspecialchars($issue['lname']) ?></p>
+        <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
         <button type="button" class="btn" onclick="window.location.href='issues_list.php'">Back to Issues List</button>
 
         <!-- Display the Comments Table -->
@@ -99,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_comment'])) {
                     <th>Short Comment</th>
                     <th>Long Comment</th>
                     <th>Posted Date</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -108,6 +114,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_comment'])) {
                         <td><?= htmlspecialchars($comment['short_comment']) ?></td>
                         <td><?= htmlspecialchars($comment['long_comment']) ?></td>
                         <td><?= htmlspecialchars($comment['posted_date']) ?></td>
+                        <td>
+                            <button type="button" onclick="openModal('readModal-<?= $comment['id'] ?>')">Read</button>
+                            <button type="button" onclick="openModal('updateModal-<?= $comment['id'] ?>')">Update</button>
+                            <button type="button" onclick="openModal('deleteModal-<?= $comment['id'] ?>')">Delete</button>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -123,8 +134,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_comment'])) {
         </form>
     </div>
 
+    <!-- Read Modal for each issue
+    <?php foreach ($issues as $issue): ?>
+    <div class="modal" id="readModal-<?= $issue['id'] ?>">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('readModal-<?= $issue['id'] ?>')">&times;</span>
+            <h2>Issue Details</h2>
+            <p><strong>ID:</strong> <?= htmlspecialchars($issue['id']) ?></p>
+            <p><strong>Short Description:</strong> <?= htmlspecialchars($issue['short_description']) ?></p>
+            <p><strong>Long Description:</strong> <?= htmlspecialchars($issue['long_description']) ?></p>
+            <p><strong>Open Date:</strong> <?= htmlspecialchars($issue['open_date']) ?></p>
+            <p><strong>Close Date:</strong> <?= htmlspecialchars($issue['close_date']) ?></p>
+            <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
+            <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
+            <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
+            <p><strong>Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
+
+        </div>
+    </div> -->
+
+    <?php endforeach; ?>
+
     <script>
-        // Modal-related JavaScript (if required for adding comments or other features)
+        function openModal(id) {
+            document.getElementById(id).classList.add("active");
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove("active");
+        }
+        window.onclick = function(event) {
+            document.querySelectorAll(".modal").forEach(modal => {
+                if (event.target === modal) {
+                    modal.classList.remove("active");
+                }
+            });
+        }
     </script>
 </body>
 </html>
