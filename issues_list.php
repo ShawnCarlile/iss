@@ -4,6 +4,13 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
 // Include database connection
 require '../database/db_connection.php';
 
@@ -20,12 +27,6 @@ $sql = "SELECT * FROM iss_issues";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
 
 // Add new issue
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
@@ -172,6 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
         <h1>Issues List</h1>
         <button type="button" class="btn" onclick="window.location.href='persons_list.php'">Go to Persons List</button>
         <button type="button" class="btn" onclick="openModal('addModal')">+</button>
+        <button type="button" class="btnLogout" onclick="window.location.href='logout.php'">Logout</button>
         <table>
             <thead>
                 <tr>
@@ -195,8 +197,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                         <td><?= htmlspecialchars($issue['project']) ?></td>
                         <td>
                             <button type="button" onclick="openModal('readModal-<?= $issue['id'] ?>')">Read</button>
+                            <?php //if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?>
+                            
+                                <!-- displays read and delete buttons if user wrote issue or is an admin -->
+
                             <button type="button" onclick="openModal('updateModal-<?= $issue['id'] ?>')">Update</button>
                             <button type="button" onclick="openModal('deleteModal-<?= $issue['id'] ?>')">Delete</button>
+
+                            <?php// } ?>
+
                             <button type="button" onclick="window.location.href='comments_list.php?issue_id=<?= $issue['id'] ?>'">Comments</button>
                         </td>
                     </tr>
@@ -246,13 +255,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
             <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
             <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
             <p><strong>Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
-
         </div>
     </div>
 
     <div id="updateModal-<?= $issue['id'] ?>" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('updateModal-<?= $issue['id'] ?>')">&times;</span>
+
             <h2>Update Issue</h2>
             
             <!-- Display the issue details that are going to be updated -->
@@ -303,7 +312,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <label for="pdf_attachment">PDF<label>
                 <input type="file" name="pdf_attachment" accept="application/pdf">
                 
+                <?php if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?> 
+
                 <button type="submit" name="update_issue">Update Issue</button>
+
+                <?php } else{ ?>
+                    <button name="update_issue" onclick="window.location.href='logout.php'">Update Issue</button>
+                <?php } ?>
             </form>
         </div>
     </div>
@@ -313,6 +328,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
         <div id="deleteModal-<?= $issue['id'] ?>" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('deleteModal-<?= $issue['id'] ?>')">&times;</span>
+
+                
+
                 <h2>Delete Issue</h2>
                 <p>Are you sure you want to delete this issue?</p>
                 <span class="close" onclick="closeModal('readModal-<?= $issue['id'] ?>')">&times;</span>
@@ -326,11 +344,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
                 <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
                 <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
+
+                <?php if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?> 
+
                 <form action="issues_list.php" method="POST">
                     <input type="hidden" name="issue_id" value="<?= $issue['id'] ?>">
                     <button type="submit" name="delete_issue">Delete</button>
                     <button type="button" onclick="closeModal('deleteModal-<?= $issue['id'] ?>')">Cancel</button>
                 </form>
+
+                <?php } else{ ?>
+                <form action="logout.php">
+                    <button type="submit" name="delete_issue">Delete</button>
+                    <button type="button" onclick="window.location.href='logout.php'">Cancel</button>
+                </form>
+                <?php } ?>
             </div>
         </div>
     <?php endforeach; ?>

@@ -158,7 +158,7 @@ if (!isset($_SESSION['user_id'])) {
                 <input type="text" name="mobile" placeholder="Mobile" required>
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="pwd_hash" placeholder="Password Hash" required>
-                <input type="text" name="admin" placeholder="Admin (Yes/No)" required>
+                <input type="text" name="admin" placeholder="Admin (Y/N)" required>
                 <button type="submit" name="add_person">Add Person</button>
             </form>
         </div>

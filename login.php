@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password']);
 
     if (!empty($email) && !empty($password)) {
-        $stmt = $conn->prepare("SELECT id, fname, lname, pwd_hash, pwd_salt FROM iss_persons WHERE email = ?");
+        $stmt = $conn->prepare("SELECT * FROM iss_persons WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['fname'] = $user['fname'];
                 $_SESSION['lname'] = $user['lname'];
+                $_SESSION['admin'] = $user['admin'];
                 header("Location: issues_list.php");
                 exit();
             } else {

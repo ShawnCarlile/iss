@@ -66,8 +66,25 @@ tr:nth-child(even) td {
     margin-bottom: 20px;
 }
 
+.btnLogout {
+    background-color: #C1272D;
+    color: white;
+    padding: 12px;
+    font-size: 18px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 20px;
+}
+
+
 .btn:hover {
     background-color: #074c9d;
+}
+
+.btnLogout:hover {
+    background-color: #9B1B30;
 }
 
 /* Modal Styling */
