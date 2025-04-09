@@ -11,8 +11,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        echo "User Salt: " . htmlspecialchars($user['pwd_salt']) . "<br>";
+        echo "Entered Password: " . htmlspecialchars($password) . "<br>";
+        echo "Generated Hash: " . md5($password . trim($user['pwd_salt'])) . "<br>";
+        echo "Stored Hash: " . htmlspecialchars($user['pwd_hash']) . "<br>";
+
         if ($user) {
-            $hashed_password = md5($password . $user['pwd_salt']);
+
+            $salt = trim($user['pwd_salt']);
+            $hashed_password = md5($password . $salt);
             
             if ($hashed_password === $user['pwd_hash']) {
                 $_SESSION['user_id'] = $user['id'];

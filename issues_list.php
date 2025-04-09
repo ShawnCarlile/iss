@@ -197,14 +197,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                         <td><?= htmlspecialchars($issue['project']) ?></td>
                         <td>
                             <button type="button" onclick="openModal('readModal-<?= $issue['id'] ?>')">Read</button>
-                            <?php //if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?>
+                            <?php if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?>
                             
                                 <!-- displays read and delete buttons if user wrote issue or is an admin -->
 
                             <button type="button" onclick="openModal('updateModal-<?= $issue['id'] ?>')">Update</button>
                             <button type="button" onclick="openModal('deleteModal-<?= $issue['id'] ?>')">Delete</button>
 
-                            <?php// } ?>
+                            <?php } ?>
 
                             <button type="button" onclick="window.location.href='comments_list.php?issue_id=<?= $issue['id'] ?>'">Comments</button>
                         </td>

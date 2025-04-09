@@ -14,16 +14,17 @@ ini_set('display_errors', 1);
 // Handle Add Person
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_person'])) {
     // Sanitize input data
-    $fname = $_POST['fname'];
-    $lname = $_POST['lname'];
-    $mobile = $_POST['mobile'];
-    $email = $_POST['email'];
-    $pwd_hash = $_POST['pwd_hash'];  // Assuming you're hashing passwords before storing
+    $fname = trim($_POST['fname']);
+    $lname = trim($_POST['lname']);
+    $mobile = trim($_POST['mobile']);
+    $email = trim($_POST['email']);
+    $pwd = trim($_POST['pwd']);
     $admin = $_POST['admin'];
 
     // Hash the password before storing
-    $pwd_salt = bin2hex(random_bytes(32)); // Generating a salt
-    $pwd_hash = md5($pwd_salt . $pwd_hash); // Using a hash and salt for secure storage
+    $pwd_salt = bin2hex(random_bytes(16)); // Generating a salt
+    $pwd_salt = trim($pwd_salt);
+    $pwd_hash = md5($pwd . $pwd_salt); // Using a hash and salt for secure storage
 
     $sql = "INSERT INTO iss_persons (fname, lname, mobile, email, pwd_hash, pwd_salt, admin)
             VALUES (:fname, :lname, :mobile, :email, :pwd_hash, :pwd_salt, :admin)";
@@ -157,7 +158,7 @@ if (!isset($_SESSION['user_id'])) {
                 <input type="text" name="lname" placeholder="Last Name" required>
                 <input type="text" name="mobile" placeholder="Mobile" required>
                 <input type="email" name="email" placeholder="Email" required>
-                <input type="password" name="pwd_hash" placeholder="Password Hash" required>
+                <input type="password" name="pwd" placeholder="Password" required>
                 <input type="text" name="admin" placeholder="Admin (Y/N)" required>
                 <button type="submit" name="add_person">Add Person</button>
             </form>
