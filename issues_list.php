@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
 }
 
 // Update issue
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_issue'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_issue']) && !(isset($_POST['reopen']) && $_POST['reopen'] === 'yes')) {
     $id = $_POST['issue_id'];
     $short_description = $_POST['short_description'];
     $long_description = $_POST['long_description'];
@@ -145,7 +145,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_issue'])) {
         echo "Error updating issue: " . $e->getMessage();
     }
 }
+else if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_issue']) && isset($_POST['reopen']) && $_POST['reopen'] === 'yes'){
+    $id = $_POST['issue_id'];
+    $close_date = '0000-00-00';
+    
+    try {
+        $sql = "UPDATE iss_issues 
+                SET close_date = :close_date 
+                WHERE id = :id";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':id' => $id,
+            ':close_date' => $close_date,
+        ]);
 
+        // Refresh the issues list after updating issue
+        header("Location: issues_list.php");
+        exit();
+    } catch (PDOException $e) {
+        echo "Error updating issue: " . $e->getMessage();
+    }
+}
 
 // Delete issue
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
@@ -177,11 +197,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Short Description</th>
                     <th>Open Date</th>
                     <th>Priority</th>
                     <th>Organization</th>
+                    <th>Status</th>
                     <th>Project</th>
                     <th>Actions</th>
                 </tr>
@@ -189,11 +209,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
             <tbody>
                 <?php foreach ($issues as $issue): ?>
                     <tr>
-                        <td><?= htmlspecialchars($issue['id']) ?></td>
                         <td><?= htmlspecialchars($issue['short_description']) ?></td>
                         <td><?= htmlspecialchars($issue['open_date']) ?></td>
                         <td><?= htmlspecialchars($issue['priority']) ?></td>
                         <td><?= htmlspecialchars($issue['org']) ?></td>
+                        <?php 
+                            $status = "Open";
+
+                            if(htmlspecialchars($issue['close_date']) != '0000-00-00'){
+                                $status = "Closed";
+                            }
+                            
+                            echo "<td>$status</td>";
+                        ?>
                         <td><?= htmlspecialchars($issue['project']) ?></td>
                         <td>
                             <button type="button" onclick="openModal('readModal-<?= $issue['id'] ?>')">Read</button>
@@ -274,11 +302,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
                 <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
                 <p><strong>Open Date:</strong> <?= $issue['open_date'] ?></p>
-                <p><strong>Close Date:</strong> <?= $issue['close_date'] ?></p>
-            </div>
+                <?php 
             
+                if($status == 'Closed'){
+                    echo "<p><strong>Close Date:</strong>" . htmlspecialchars($issue['close_date']) . "</p>";
+                }
+                else{
+                    echo "<p><strong>Status: </strong>Open</p>";
+                }
+
+                ?>
+            </div>
+
+            <?php
+            $status = ($issue['close_date'] == '0000-00-00') ? 'Open' : 'Closed';
+            ?>
+
             <form action="issues_list.php" method="POST" enctype="multipart/form-data">
+
+                <?php if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?> 
+
                 <input type="hidden" name="issue_id" value="<?= $issue['id'] ?>">
+                
+                <?php if($status == 'Open') { 
+                    //will display edit issue boxes if status is open
+                    //will not display if status is closed to prevent user from editingclosed issues
+                ?>
+                
                 <label for="short_description">Short Description:</label>
                 <input type="text" name="short_description" value="<?= htmlspecialchars($issue['short_description']) ?>" required>
                 
@@ -287,10 +337,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 
                 <label for="open_date">Open Date:</label>
                 <input type="date" name="open_date" value="<?= $issue['open_date'] ?>" required>
-                
+
                 <label for="close_date">Close Date:</label>
                 <input type="date" name="close_date" value="<?= $issue['close_date'] ?>">
-                
+
                 <label for="priority">Priority:</label>
                 <input type="text" name="priority" value="<?= htmlspecialchars($issue['priority']) ?>" required>
                 
@@ -312,7 +362,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <label for="pdf_attachment">PDF<label>
                 <input type="file" name="pdf_attachment" accept="application/pdf">
                 
-                <?php if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?> 
+                
+
+                <?php } else { //displayed if issue is closed upon clicked update ?>
+                    
+                    <label>Reopen this issue?</label>
+                    <select name="reopen">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+
+                <?php } ?>
 
                 <button type="submit" name="update_issue">Update Issue</button>
 

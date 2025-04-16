@@ -91,6 +91,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_comment'])) {
         <p><strong>Close Date:</strong> <?= htmlspecialchars($issue['close_date']) ?></p>
         <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
         <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
+        <?php
+
+        $status = "Open";
+
+        if(htmlspecialchars($issue['close_date']) != '0000-00-00'){
+            $status = "Closed";
+        }
+
+        echo "<p><strong>Status: </strong>$status</p>";
+
+        ?>
         <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
         <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
         <button type="button" class="btn" onclick="window.location.href='issues_list.php'">Back to Issues List</button>
@@ -125,6 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_comment'])) {
         </table>
 
         <!-- Form to Add a New Comment -->
+        <?php if($status != 'Closed') { ?>
         <h3>Add a New Comment</h3>
         <form action="comments_list.php?issue_id=<?= htmlspecialchars($issue_id) ?>" method="POST">
             <input type="text" name="short_comment" placeholder="Short Comment" required class="input-field">
@@ -133,6 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_comment'])) {
             <button type="submit" name="add_comment" class="btn">Add Comment</button>
         </form>
     </div>
+
+        <?php } ?>
 
     <!-- Read Modal for each issue
     <?php foreach ($issues as $issue): ?>
