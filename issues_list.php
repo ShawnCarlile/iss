@@ -23,6 +23,11 @@ $stmt = $conn->prepare($sql);
 $stmt->execute();
 $persons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$personMap = [];
+foreach ($persons as $p) {
+    $personMap[$p['id']] = $p['fname'] . ' ' . $p['lname'];
+}
+
 $sql = "SELECT * FROM iss_issues";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
@@ -48,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
             die("File size exceeds 2MB limit.");
         }
 
-        $newFileName = md5(time() . $fileName) . ',' . $fileExtension;
+        $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
         $uploadFileDir = './uploads/'; //creates an upload file folder where the program is
         $dest_path = $uploadFileDir . $newFileName;
 
@@ -75,7 +80,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
     $priority = $_POST['priority'];
     $org = $_POST['org'];
     $project = $_POST['project'];
-    $per_id = $_POST['per_id'];
+
+    if(!isset($_POST['per_id'])){
+        $per_id = $_SESSION['user_id'];
+    } else {
+        $per_id = $_POST['per_id'];
+    }
+
+    if ($_SESSION['admin'] == "Y" && !in_array($per_id, array_column($persons, 'id'))) {
+        // If the 'per_id' is invalid or not assigned to a person, reject the request.
+        die('Invalid person ID.');
+    }
+    
     $close_date = '0000-00-00'; // Default until updated
     // $newFileName is PDF attachment
     // $attachmentPath is the entire path
@@ -93,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
         ':org' => $org,
         ':project' => $project,
         ':per_id' => $per_id,
-        ':pdf_attachment' => $newFileName
+        ':pdf_attachment' => $newFileName ?? null
     ]);
 
     // Refresh the issues list after inserting new issue
@@ -109,7 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_issue'])) {
 }
 
 // Update issue
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_issue']) && !(isset($_POST['reopen']) && $_POST['reopen'] === 'yes')) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_issue']) 
+&& !(isset($_POST['reopen']) && $_POST['reopen'] === 'yes')) {
     $id = $_POST['issue_id'];
     $short_description = $_POST['short_description'];
     $long_description = $_POST['long_description'];
@@ -118,7 +135,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_issue']) && !(i
     $priority = $_POST['priority'];
     $org = $_POST['org'];
     $project = $_POST['project'];
-    $per_id = $_POST['per_id'];
+
+    if ($_SESSION['admin'] != "Y") {
+        // Fetch the current issue from the DB to preserve per_id
+        $stmt = $conn->prepare("SELECT per_id FROM iss_issues WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $issue = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+        if (!$issue) {
+            die("Issue not found.");
+        }
+    
+        $per_id = $issue['per_id'];
+    } else {
+        $per_id = $_POST['per_id'];
+    }
+    
 
     try {
         $sql = "UPDATE iss_issues 
@@ -178,6 +210,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
     header("Location: issues_list.php");
     exit();
 }
+
+// Check the 'status_filter' GET parameter and adjust the query accordingly
+$status_filter = isset($_GET['status_filter']) ? $_GET['status_filter'] : 'open'; // Default to 'open'
+
+if ($status_filter == 'open') {
+    $sql = "SELECT * FROM iss_issues WHERE close_date = '0000-00-00'";
+}elseif($status_filter == 'closed'){
+    $sql = "SELECT * FROM iss_issues WHERE close_date != '0000-00-00'";
+} else {
+    $sql = "SELECT * FROM iss_issues"; // Show all issues
+}
+
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$issues = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -194,6 +242,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
         <button type="button" class="btn" onclick="window.location.href='persons_list.php'">Go to Persons List</button>
         <button type="button" class="btn" onclick="openModal('addModal')">+</button>
         <button type="button" class="btnLogout" onclick="window.location.href='logout.php'">Logout</button>
+        <!-- Add this section above the table -->
+        <div class="filter-options">
+            <form action="issues_list.php" method="GET">
+                <label for="status_filter">Filter by Status:</label>
+                <select name="status_filter" id="status_filter" onchange="this.form.submit()">
+                    <option value="open" <?php echo (isset($_GET['status_filter']) && $_GET['status_filter'] == 'open') ? 'selected' : ''; ?>>Open</option>
+                    <option value="all" <?php echo (isset($_GET['status_filter']) && $_GET['status_filter'] == 'all') ? 'selected' : ''; ?>>All</option>
+                    <option value="closed" <?php echo (isset($_GET['status_filter']) && $_GET['status_filter'] == 'closed') ? 'selected' : ''; ?>>Closed</option>
+                </select>
+            </form>
+        </div>
+
         <table>
             <thead>
                 <tr>
@@ -254,13 +314,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <input type="text" name="priority" placeholder="Priority" required>
                 <input type="text" name="org" placeholder="Organization" required>
                 <input type="text" name="project" placeholder="Project" required>
+                
+                <?php if($_SESSION['admin'] == "Y") { //code to not let someone who isnt admin assign issues to others ?>
                 <select name="per_id" required>
                     <?php foreach ($persons as $person): ?>
                         <option value="<?= htmlspecialchars($person['id']) ?>"><?= htmlspecialchars($person['fname'] . ' ' . $person['lname']) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <?php } ?>
                 
-                <label for="pdf_attachment">PDF<label>
+                <label for="pdf_attachment">PDF</label>
                 <input type="file" name="pdf_attachment" accept="application/pdf">
                 
                 <button type="submit" name="add_issue">Add Issue</button>
@@ -282,7 +345,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
             <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
             <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
             <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
-            <p><strong>Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
+            <p><strong>Person:</strong> <?= htmlspecialchars($personMap[$issue['per_id']]) ?>
+            </p>
         </div>
     </div>
 
@@ -300,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
                 <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
                 <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
-                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
+                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($personMap[$issue['per_id']]) ?></p>
                 <p><strong>Open Date:</strong> <?= $issue['open_date'] ?></p>
                 <?php 
             
@@ -350,14 +414,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <label for="project">Project:</label>
                 <input type="text" name="project" value="<?= htmlspecialchars($issue['project']) ?>" required>
                 
+                <?php if($_SESSION['admin'] == "Y") { //user should not be able to change assigned person if not an admin ?>
+                
                 <label for="per_id">Assigned Person:</label>
                 <select name="per_id" required>
-                    <?php foreach ($persons as $person): ?>
+                    <?php foreach ($persons as $person):  ?>
                         <option value="<?= htmlspecialchars($person['id']) ?>" <?= $person['id'] == $issue['per_id'] ? 'selected' : '' ?>>
                             <?= htmlspecialchars($person['fname'] . ' ' . $person['lname']) ?>
                         </option>
-                    <?php endforeach; ?>
+                    <?php endforeach;?>
                 </select>
+                
+                <?php } ?>
 
                 <label for="pdf_attachment">PDF<label>
                 <input type="file" name="pdf_attachment" accept="application/pdf">
@@ -376,9 +444,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
 
                 <button type="submit" name="update_issue">Update Issue</button>
 
-                <?php } else{ ?>
-                    <button name="update_issue" onclick="window.location.href='logout.php'">Update Issue</button>
-                <?php } ?>
+                <?php }?> 
             </form>
         </div>
     </div>
@@ -387,13 +453,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
         <!-- Modal for deleting an issue -->
         <div id="deleteModal-<?= $issue['id'] ?>" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal('deleteModal-<?= $issue['id'] ?>')">&times;</span>
-
-                
+                <span class="close" onclick="closeModal('deleteModal-<?= $issue['id'] ?>')">&times;</span>  
 
                 <h2>Delete Issue</h2>
                 <p>Are you sure you want to delete this issue?</p>
-                <span class="close" onclick="closeModal('readModal-<?= $issue['id'] ?>')">&times;</span>
                 <h2>Issue Details</h2>
                 <p><strong>ID:</strong> <?= htmlspecialchars($issue['id']) ?></p>
                 <p><strong>Short Description:</strong> <?= htmlspecialchars($issue['short_description']) ?></p>
@@ -403,7 +466,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
                 <p><strong>Priority:</strong> <?= htmlspecialchars($issue['priority']) ?></p>
                 <p><strong>Organization:</strong> <?= htmlspecialchars($issue['org']) ?></p>
                 <p><strong>Project:</strong> <?= htmlspecialchars($issue['project']) ?></p>
-                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($persons[$issue['per_id'] - 1]['fname']) . ' ' . htmlspecialchars($persons[$issue['per_id'] - 1]['lname']) ?></p>
+                <p><strong>Assigned Person:</strong> <?= htmlspecialchars($personMap[$issue['per_id']]) ?></p>
 
                 <?php if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?> 
 
@@ -424,19 +487,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_issue'])) {
     <?php endforeach; ?>
 
     <script>
-        function openModal(id) {
-            document.getElementById(id).classList.add("active");
+    // Open Modal
+    function openModal(id) {
+        var modal = document.getElementById(id);
+        modal.style.display = "block";
+    }
+
+    // Close Modal
+    function closeModal(id) {
+        var modal = document.getElementById(id);
+        modal.style.display = "none";
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            closeModal(event.target.id);
         }
-        function closeModal(id) {
-            document.getElementById(id).classList.remove("active");
-        }
-        window.onclick = function(event) {
-            document.querySelectorAll(".modal").forEach(modal => {
-                if (event.target === modal) {
-                    modal.classList.remove("active");
-                }
-            });
-        }
-    </script>
+    }
+</script>
+
 </body>
 </html>

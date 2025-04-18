@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Handle Add Person
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_person'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_person']) && $_SESSION['admin'] == 'Y') {
     // Sanitize input data
     $fname = trim($_POST['fname']);
     $lname = trim($_POST['lname']);
@@ -46,28 +46,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_person'])) {
 }
 
 // Handle Update Person
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_person'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_person']) 
+&& ($_SESSION['admin'] == 'Y' || $_SESSION['user_id'] == $_POST['person_id'])) {
     // Sanitize input data
     $person_id = $_POST['person_id'];
     $fname = $_POST['fname'];
     $lname = $_POST['lname'];
     $mobile = $_POST['mobile'];
     $email = $_POST['email'];
-    $admin = $_POST['admin'];
 
-    // Prepare SQL to update the person details
+    // Prepare SQL to update the person details, without the admin field
     $sql = "UPDATE iss_persons
-            SET fname = :fname, lname = :lname, mobile = :mobile, email = :email, admin = :admin
+            SET fname = :fname, lname = :lname, mobile = :mobile, email = :email
             WHERE id = :id";
 
     $stmt = $conn->prepare($sql);
+
+    // Execute the update query, without considering the admin field
     $stmt->execute([
         ':id' => $person_id,
         ':fname' => $fname,
         ':lname' => $lname,
         ':mobile' => $mobile,
         ':email' => $email,
-        ':admin' => $admin
     ]);
 
     // Redirect to refresh the list
@@ -75,8 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_person'])) {
     exit();
 }
 
+
 // Handle Delete Person
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_person'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_person'])
+&& ($_SESSION['admin'] == 'Y' || $_SESSION['user_id'] == $_POST['person_id'])) {
     // Get person ID from the form
     $person_id = $_POST['person_id'];
 
@@ -115,11 +118,13 @@ if (!isset($_SESSION['user_id'])) {
     <div class="container">
         <h1>Persons List</h1>
         <button type="button" class="btn" onclick="window.location.href='issues_list.php'">Go to Issues List</button>
+
+        <?php if($_SESSION['admin'] == 'Y') { ?>
         <button type="button" class="btn" onclick="openModal('addModal')">Add Person</button>
+        <?php } ?>
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>First Name</th>
                     <th>Last Name</th>
                     <th>Mobile</th>
@@ -131,7 +136,6 @@ if (!isset($_SESSION['user_id'])) {
             <tbody>
                 <?php foreach ($persons as $person): ?>
                     <tr>
-                        <td><?= htmlspecialchars($person['id']) ?></td>
                         <td><?= htmlspecialchars($person['fname']) ?></td>
                         <td><?= htmlspecialchars($person['lname']) ?></td>
                         <td><?= htmlspecialchars($person['mobile']) ?></td>
@@ -139,8 +143,13 @@ if (!isset($_SESSION['user_id'])) {
                         <td><?= htmlspecialchars($person['admin']) ?></td>
                         <td>
                             <button type="button" onclick="openModal('readModal-<?= $person['id'] ?>')">Read</button>
+                            
+                            <?php if($_SESSION['user_id'] == $person['id'] || $_SESSION['admin'] == "Y") { ?>
+
                             <button type="button" onclick="openModal('updateModal-<?= $person['id'] ?>')">Update</button>
                             <button type="button" onclick="openModal('deleteModal-<?= $person['id'] ?>')">Delete</button>
+
+                            <?php } ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -159,7 +168,11 @@ if (!isset($_SESSION['user_id'])) {
                 <input type="text" name="mobile" placeholder="Mobile" required>
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="password" name="pwd" placeholder="Password" required>
+                
+                <?php if($_SESSION['admin'] == 'Y') { ?>
                 <input type="text" name="admin" placeholder="Admin (Y/N)" required>
+                <?php } else {} ?>
+
                 <button type="submit" name="add_person">Add Person</button>
             </form>
         </div>
@@ -171,7 +184,6 @@ if (!isset($_SESSION['user_id'])) {
             <div class="modal-content">
                 <span class="close" onclick="closeModal('readModal-<?= $person['id'] ?>')">&times;</span>
                 <h2>Person Details</h2>
-                <p><strong>ID:</strong> <?= htmlspecialchars($person['id']) ?></p>
                 <p><strong>First Name:</strong> <?= htmlspecialchars($person['fname']) ?></p>
                 <p><strong>Last Name:</strong> <?= htmlspecialchars($person['lname']) ?></p>
                 <p><strong>Mobile:</strong> <?= htmlspecialchars($person['mobile']) ?></p>
@@ -193,7 +205,7 @@ if (!isset($_SESSION['user_id'])) {
                     <input type="text" name="lname" value="<?= htmlspecialchars($person['lname']) ?>" required>
                     <input type="text" name="mobile" value="<?= htmlspecialchars($person['mobile']) ?>" required>
                     <input type="email" name="email" value="<?= htmlspecialchars($person['email']) ?>" required>
-                    <input type="text" name="admin" value="<?= htmlspecialchars($person['admin']) ?>" required>
+
                     <button type="submit" name="update_person">Update Person</button>
                 </form>
             </div>
@@ -230,6 +242,7 @@ if (!isset($_SESSION['user_id'])) {
             document.querySelectorAll(".modal").forEach(modal => {
                 if (event.target === modal) {
                     modal.classList.remove("active");
+                    document.body.classList.remove("modal-open");
                 }
             });
         }

@@ -58,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="submit" value="Login">
             </div>
         </form>
+        <p>New Here? <a href="signup.php">Sign Up Here</a></p>
     </div>
 </body>
 </html>
