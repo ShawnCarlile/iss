@@ -1,0 +1,258 @@
+/* Base body background */
+body {
+    background-color: #e8f5e9;  /* Light green background for the whole page */
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Container styles for the page */
+.container {
+    width: 80%;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff; /* White background for the content to stand out */
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Main heading for the page */
+h1 {
+    text-align: center;
+    color: #333;
+    font-size: 2.5rem;
+}
+
+/* Subheading for issue details */
+h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin-top: 20px;
+}
+
+/* Subheading for comments section */
+h3 {
+    color: #333;
+    font-size: 1.6rem;
+    margin-top: 20px;
+}
+
+/* Table styling for the comments list */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+td {
+    background-color: #fff;
+    color: #333;
+}
+
+/* Styling for the comment buttons in the table */
+td button {
+    margin-right: 5px;
+    padding: 8px 15px;
+    background-color: #4CAF50;  /* Green button */
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+td button:hover {
+    background-color: #45a049;
+}
+
+/* Styling for the add new comment button */
+.btn {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #4CAF50;  /* Green button */
+    color: white;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #45a049;
+}
+
+/* Form styling for adding new comments */
+form {
+    margin-top: 20px;
+}
+
+input[type="text"],
+textarea,
+input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;  /* Green button */
+    color: white;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: #45a049;
+}
+
+/* Modal styles (for any future modal dialogs) */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto; /* Allow scrolling if modal content is tall */
+}
+
+.modal.active {
+    display: flex;
+}
+
+/* Adjusting the long comment textarea */
+textarea[name="long_comment"] {
+    width: 100%;
+    height: 150px;  /* Increase height to accommodate more content */
+    resize: vertical;
+    word-wrap: break-word; /* Ensure long words break onto the next line */
+    overflow-y: auto; /* Add a scrollbar if the content is too long */
+}
+
+/* Modal Content Layout */
+.modal-content {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;  /* Limiting height to avoid overflowing */
+    overflow-y: auto; /* Ensure content scrolls vertically */
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    flex-direction: column; /* Stack items vertically inside the modal */
+    justify-content: flex-start;
+    overflow-x: hidden; /* Disable horizontal scroll */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+/* Ensuring that text in the modal stays vertical */
+.modal-content p, .modal-content .long-comment-text {
+    margin: 15px 0;
+    line-height: 1.5;
+    max-width: 100%;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+/* Adjusting the "Read" button text layout inside the modal */
+.modal-content h2 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center; /* Center the modal heading */
+}
+
+/* Adjusting the size of the 'close' button */
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+}
+
+/* Make the table container scroll horizontally if needed */
+.table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+/* Enforce word-breaking inside table cells */
+table {
+    table-layout: fixed; /* Forces table to respect width limits */
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+    word-wrap: break-word;
+    overflow-wrap: break-word; /* Added for better support */
+    white-space: normal; /* Prevents text from staying in one line */
+}
+
+/* Optional: limit the width of specific columns */
+td.long-comment-column {
+    max-width: 250px; /* or whatever width makes sense */
+}
+
+
+td button {
+    margin-right: 5px;
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+td button:hover {
+    background-color: #45a049;
+}
+
+/* Container Styling */
+.container {
+    width: 80%;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
